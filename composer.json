@@ -32,6 +32,10 @@
         "pestphp/pest-plugin-laravel": "^5.0",
         "phpstan/phpstan": "^2.1"
     },
+    "suggest": {
+        "laravel/reverb": "Self-hosted WebSocket server for Walkie's broadcasts",
+        "pusher/pusher-php-server": "Needed by Laravel's reverb and pusher broadcast drivers"
+    },
     "autoload": {
         "psr-4": {
             "JustinHoltWeb\\Walkie\\": "src/"

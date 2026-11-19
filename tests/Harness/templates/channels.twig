@@ -1,0 +1,14 @@
+{# Walkie harness: /walkie/channels?slug=…&site=… #}
+{% set r = app('request') %}
+{% set site = r.query('site') ?: null %}
+{# the entry in the requested site, without letting an unknown handle reach the query #}
+{% set entry = craft.entries().slug(r.query('slug')).site('*').status(null).all()|filter(e => e.site.handle == (site ?: currentSite.handle))|first %}
+<p id="public">{{ walkie.channel(entry) }}</p>
+<p id="private">{{ walkie.privateChannel(entry) }}</p>
+<p id="presence">{{ walkie.presenceChannel(entry) }}</p>
+<p id="feed">{{ walkie.sectionChannel('walkieNews', site) }}</p>
+<p id="privateFeed">{{ walkie.sectionChannel('walkieNews', site, true) }}</p>
+<p id="secretFeed">{{ walkie.sectionChannel('walkieSecret', site) }}</p>
+<p id="volume">{{ walkie.volumeChannel('walkieFiles', site) }}</p>
+<p id="config">{{ walkie.config(site) is not null ? walkie.config(site)|json_encode }}</p>
+<div id="script">{{ walkie.script(site) }}</div>

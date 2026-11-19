@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Broadcasting;
+
+use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
+use Illuminate\Support\Facades\File;
+
+/**
+ * Harness-only broadcaster for Walkie's checks (copied from craft-walkie/tests/Harness).
+ *
+ * Channel authorisation is Laravel's real Pusher/Reverb code path (the same HMAC
+ * signatures a Reverb server verifies). Broadcasts are appended to
+ * storage/logs/walkie-broadcasts.jsonl instead of being sent to a server.
+ * Registered in AppServiceProvider as the `walkie-capture` connection.
+ */
+class WalkieCaptureBroadcaster extends PusherBroadcaster
+{
+    public static function path(): string
+    {
+        return storage_path('logs/walkie-broadcasts.jsonl');
+    }
+
+    public function broadcast(array $channels, $event, array $payload = [])
+    {
+        unset($payload['socket']);
+
+        File::append(self::path(), json_encode([
+            'event' => $event,
+            'channels' => $this->formatChannels($channels),
+            'payload' => $payload,
+        ], JSON_UNESCAPED_SLASHES)."\n");
+    }
+}
