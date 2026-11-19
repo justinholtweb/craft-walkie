@@ -63,6 +63,7 @@
         "sort-packages": true
     },
     "support": {
+        "docs": "https://justinholt.com/plugins/craft-walkie/docs",
         "issues": "https://github.com/justinholtweb/craft-walkie/issues",
         "source": "https://github.com/justinholtweb/craft-walkie"
     },
@@ -71,7 +72,7 @@
         "handle": "walkie",
         "developer": "Justin Holt",
         "developerUrl": "https://justinholt.com",
-        "documentationUrl": "https://github.com/justinholtweb/craft-walkie",
+        "documentationUrl": "https://justinholt.com/plugins/craft-walkie/docs",
         "changelogUrl": "https://raw.githubusercontent.com/justinholtweb/craft-walkie/main/CHANGELOG.md",
         "class": "JustinHoltWeb\\Walkie\\Plugin"
     }
