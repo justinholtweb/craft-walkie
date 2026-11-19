@@ -71,7 +71,7 @@ import json,sys
 m=[json.loads(l) for l in open('$LOG') if l.strip()] if __import__('os').path.exists('$LOG') else []
 # Other sessions save entries in the shared harness too: keep only this run's fixtures.
 ids={int(i) for i in '${IDS:-}'.split() if i}
-m=[x for x in m if (x['payload'].get('section') in ('walkieNews', 'walkieSecret') or x['payload'].get('volume') == 'walkieFiles') and x['payload'].get('id') in ids]
+m=[x for x in m if any(c.rsplit('.', 1)[-1] in ('walkieNews', 'walkieSecret', 'walkieFiles') for c in x['channels']) and x['payload'].get('id') in ids]
 def j(*a): return '/'.join(str(x) for x in a)
 print($1)"; }
 summary='" ".join(x["event"]+"@"+",".join(x["channels"]) for x in m)'
@@ -141,6 +141,14 @@ ok "a rolled-back save broadcasts nothing" "$(cap 'len(m)')" "0"
 reset_log
 ok "save an asset" "$(tk "\$e=CraftCms\\Cms\\Asset\\Elements\\Asset::find()->id($ASSET)->one(); \$e->title='Walkie asset'; echo $SAVE ? 'saved' : 'failed';")" "saved"
 ok "→ private saved on the asset + volume feed, never public" "$(cap "$summary")/$(cap 'j(m[0]["payload"]["volume"], m[0]["payload"]["type"])')" "saved@private-walkie.default.asset.$ASSET,private-walkie.default.assets.walkieFiles/walkieFiles/asset"
+
+# The PHP API other plugins use (Live, Pigeon…): custom events on an element's channels.
+reset_log
+ok "Walkie::send() a custom event (private + public)" "$(tk "\$e=$E::find()->id($LIVE)->one(); echo app(JustinHoltWeb\\Walkie\\Walkie::class)->send(\$e, 'liveUpdate', ['updateId' => 7], public: true) ? 'sent' : 'no';")/$(cap "$summary")/$(cap 'json.dumps(m[0]["payload"], sort_keys=True)')" "sent/liveUpdate@private-walkie.default.entry.$LIVE,private-walkie.default.entries.walkieNews,walkie.default.entry.$LIVE,walkie.default.entries.walkieNews/{\"event\": \"liveUpdate\", \"id\": $LIVE, \"site\": \"default\", \"type\": \"entry\", \"updateId\": 7}"
+reset_log
+ok "send() never goes public for a disabled entry" "$(tk "\$e=$E::find()->id($OFF)->status(null)->one(); echo app(JustinHoltWeb\\Walkie\\Walkie::class)->send(\$e, 'liveUpdate', [], public: true) ? 'sent' : 'no';")/$(cap "$summary")" "sent/liveUpdate@private-walkie.default.entry.$OFF,private-walkie.default.entries.walkieNews"
+ok "send() refuses Walkie's own event names and odd names" "$(tk "\$e=$E::find()->id($LIVE)->one(); foreach (['saved', 'removed', 'Bad Name', ''] as \$n) { try { app(JustinHoltWeb\\Walkie\\Walkie::class)->send(\$e, \$n); echo 'sent;'; } catch (InvalidArgumentException) { echo 'refused;'; } }")" "refused;refused;refused;refused;"
+ok "send() can't override id, type or site" "$(reset_log; tk "\$e=$E::find()->id($LIVE)->one(); app(JustinHoltWeb\\Walkie\\Walkie::class)->send(\$e, 'liveUpdate', ['id' => 1, 'site' => 'x', 'type' => 'user']); echo 1;" >/dev/null; cap "j(m[0]['payload']['id'] == $LIVE, m[0]['payload']['site'], m[0]['payload']['type'])")" "True/default/entry"
 
 settings "['broadcastSaves' => false]" >/dev/null
 reset_log; entry walkie-live '$e->title = "Walkie Live 3";' >/dev/null
@@ -225,7 +233,8 @@ ok "entry viewer → volume feed" "$(auth "$VIEWER" $P.assets.walkieFiles)" "403
 ok "asset viewer → an asset" "$(auth "$ASSETS" $P.asset.$ASSET)/$(auth "$VIEWER" $P.asset.$ASSET)" "200 signed/403"
 ok "presence while switched off" "$(auth "$VIEWER" presence-walkie.default.entry.$LIVE)" "403"
 settings "['presence' => true]" >/dev/null
-ok "presence: who's here (name only)" "$(auth "$VIEWER" presence-walkie.default.entry.$LIVE)" "200 signed Viewer"
+r=$(auth "$VIEWER" presence-walkie.default.entry.$LIVE); [ "$r" = 403 ] && { sleep 3; r=$(auth "$VIEWER" presence-walkie.default.entry.$LIVE); } # opcache lag on the settings file
+ok "presence: who's here (name only)" "$r" "200 signed Viewer"
 ok "presence: still needs view permission" "$(auth "$OWNJ" presence-walkie.default.entry.$LIVE)" "403"
 ok "presence on a section feed" "$(auth "$VIEWER" presence-walkie.default.entries.walkieNews)" "403"
 ok "presence payload has no email" "$(curl -sk -b "$VIEWER" -H 'Accept: application/json' -H "X-XSRF-TOKEN: $(xsrf "$VIEWER")" -X POST "$U/broadcasting/auth" --data-urlencode socket_id=1.2 --data-urlencode "channel_name=presence-walkie.default.entry.$LIVE" | grep -c '@walkie.test')" "0"
