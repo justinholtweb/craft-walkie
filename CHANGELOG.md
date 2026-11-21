@@ -2,7 +2,12 @@
 
 > Walkie is for **Craft 6**, which is still in beta (so is Walkie). Use caution on production sites.
 
-## 6.0.0-beta.1 - Unreleased
+## 6.0.0-beta.2 - 2026-11-21
+
+### Changed
+- The docs FAQ now explains how Walkie relates to Stop Sign and Live.
+
+## 6.0.0-beta.1 - 2026-11-19
 
 ### Added
 - Entry and asset saves, deletes, restores and scheduled status changes broadcast through Laravel broadcasting (Reverb, Pusher or any Pusher-protocol server), per site.
