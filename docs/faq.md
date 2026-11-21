@@ -37,3 +37,16 @@ permissions for that element or section in that site. Payloads never contain con
 ## Can other plugins use it?
 
 Yes: `Walkie::send()` broadcasts your own events on an element's channels. See [Events](events.md).
+
+## Does Walkie replace Stop Sign or Live?
+
+No. Each of those is a finished feature on Craft 5:
+
+- **Stop Sign** warns editors when someone else is in the same entry, and can lock it.
+- **Live** publishes live-blog updates without touching
+  the page cache.
+
+Walkie is plumbing on Craft 6. It broadcasts saves, deletes, status changes and presence over Reverb
+or Pusher, with Craft's permissions applied, and your front end or another plugin decides what to do
+with them. Its presence channels can tell you who is looking at an entry, but Walkie doesn't draw a
+"who's editing" warning in the control panel itself (see [Presence](presence)).
